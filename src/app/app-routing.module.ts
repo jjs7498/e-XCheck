@@ -12,8 +12,9 @@ const routes: Routes = [
     path: 'admin',
     component: AdminComponent
   },{
-    path: '404_not_found',
-    component: NotFoundComponent
+    path: '**',
+    pathMatch: 'full',
+    redirectTo: '404'
   }
 ];
 
