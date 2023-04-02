@@ -1,0 +1,59 @@
+<div nz-row nzGutter="16">
+    <div nz-col nzSpan="16" nzLg="16">
+      <div class="webcam-area" style="border: 0px solid #ccc; height: 78vh; padding-right: 5px;">
+        <video #videoElement autoplay id="scancam"></video>
+      </div>
+      <button nz-button nzType="primary" style="width: 99.35%" (click)="scan()" [disabled]="isScanning" >Scan
+        <nz-spin nzSimple *ngIf="isScanning"></nz-spin>
+      </button>
+    </div>
+    <canvas #canvasElement id="canvas" style="display: none;"> </canvas>
+    <div nz-col nzSpan="24" nzLg="8">
+      <div class="checkout-table-location">
+        <nz-table [nzData]="tableData" nzSize="small" [nzShowPagination]="false" [nzScroll]="{ y: '35vh' }" nzTemplateMode="true">
+          <thead>
+            <tr>
+              <th nz-th><span>Image</span></th>
+              <th nz-th><span>Item Name</span></th>
+              <th nz-th><span>Item Quantity</span></th>
+              <th nz-th><span>Item Price</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Display table data -->
+            <tr nz-tbody-tr *ngFor="let data of tableData">
+              <td nz-td><img nz-image [nzSrc]="data.image" width="32" height="32" alt="item.itemName"></td>
+              <td nz-td>{{ data.itemName}}</td>
+              <td nz-td>{{ data.quantity }}</td>
+              <td nz-td>{{ "$" + (data.price | number:'1.2-2') }}</td>
+            </tr>
+        </nz-table>
+        <nz-divider></nz-divider>
+        <button nz-button nzType="primary" nzBlock (click)="toggleAutoScan()">
+          Turn {{isAutoScan ? 'Off' : 'On'}} Auto Scan
+        </button>
+        <nz-table nzTemplateMode="true" [nzShowPagination]="false" height="30vh" [nzTableLayout]="'fixed'">
+            <!-- Add horizontal line  -->
+            <tbody>
+            <!-- Display sum, taxes, and total -->
+            <tr nz-tbody-tr>
+              <td nz-td colspan="2">Sum:</td>
+              <td nz-td>{{ "$" + (getTotal() | number:'1.2-2') }}</td>
+            </tr>
+            <tr nz-tbody-tr>
+              <td nz-td colspan="2">Taxes:</td>
+              <td nz-td>{{ "$" + (getTaxes() | number:'1.2-2') }}</td>
+            </tr>
+            <tr nz-tbody-tr>
+              <td nz-td colspan="2">Total:</td>
+              <td nz-td>{{ "$" + ((getTotal() + getTaxes()) | number:'1.2-2') }}</td>
+            </tr>
+          </tbody>
+        </nz-table>
+        <p></p>
+        <button nz-button [disabled]="isScanning || tableData.length <= 0" nzType="primary" position="fixed" nzBlock (click)="checkout()">
+          Checkout
+        </button>
+      </div>
+    </div>
+  </div>

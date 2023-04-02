@@ -1,0 +1,67 @@
+<div nz-row nzGutter="24">
+  <div nz-col nzSpan="8" nzLg="8">
+    <!-- Table -->
+    <nz-table [nzData]="tableData" [nzShowPagination]="false" [nzScroll]="{ y: '70vh' }">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Checkouts</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr nz-tbody-tr *ngFor="let item of tableData" (click)="showModal(item.date)">
+          <td nz-td>{{ item.date }}</td>
+          <td nz-td>{{ item.number_of_checkouts }}</td>
+          <td nz-td>{{ "$" + (item.total * 1.06 | number:'1.2-2') }}</td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </div>
+  <div nz-col nzSpan="16" nzLg="16">
+    <nz-tabset>
+      <nz-tab nzTitle="Total">
+        <!-- Chart for Total Gain in the Past 10 Days -->
+        <canvas baseChart
+                [data]="barChartTotalData"
+                [options]="barChartOptions"
+                [legend]="barChartLegend"
+                [type]="'bar'"
+                style="width: 100%; height:100%">
+        </canvas>
+      </nz-tab>
+      <nz-tab nzTitle="Taxes">
+        <canvas baseChart
+                [data]="barChartTaxesData"
+                [options]="barChartOptions"
+                [legend]="barChartLegend"
+                [type]="'bar'"
+                style="width: 100%; height:100%">
+        </canvas>
+      </nz-tab>
+      <nz-tab nzTitle="Net">
+        <canvas baseChart
+                [data]="barChartNetData"
+                [options]="barChartOptions"
+                [legend]="barChartLegend"
+                [type]="'bar'"
+                style="width: 100%; height:100%">
+        </canvas>
+      </nz-tab>
+    </nz-tabset>
+  </div>
+  <nz-divider></nz-divider>
+  <div nz-col nzSpan="8" nzLg="8">
+    <p>Product Managment</p>
+  </div>
+</div>
+
+<!-- Modal -->
+<nz-modal [(nzVisible)]="isVisible" nzTitle="Date Details: {{ selectedData?.date }}" (nzOnCancel)="handleCancel()" (nzOnOk)="handleOk()">
+  <ng-container *nzModalContent>
+    <p>Total Checkouts: {{ selectedData?.number_of_checkouts }}</p>
+    <p>Total Sales: ${{ selectedData?.total * 1.06 | number:'1.2-2' }}</p>
+    <p>Total Taxes: ${{ (selectedData?.total * 0.06)  | number:'1.2-2' }}</p>
+    <p>Total Net Gain: ${{ selectedData?.total | number:'1.2-2' }}</p>
+  </ng-container>
+</nz-modal>
