@@ -8,19 +8,41 @@ interface TableData {
   total: number;
 }
 
+export interface Result {
+  totalPrice: number;
+  transactions: Transaction[];
+}
+
+export interface Transaction {
+  createdAt: Date;
+  products: Product[];
+  totalPrice: number;
+}
+
+export interface Product {
+  itemName: string;
+  quantity: number;
+  price: number | string;
+}
+
 @Component({
   selector: 'app-admin',
   templateUrl: './admin.component.html',
-  styleUrls: ['./admin.component.scss']
+  styleUrls: ['./admin.component.scss'],
 })
 export class AdminComponent implements OnInit {
   isVisible = false; // Modal visibility
   selectedData: any; // Data for the selected date
 
-  constructor(private changeDetectorRef: ChangeDetectorRef, private http: HttpClient) { }
+  constructor(
+    private changeDetectorRef: ChangeDetectorRef,
+    private http: HttpClient
+  ) {}
 
   public barChartLegend = true;
   public barChartPlugins = [];
+  salesData: any[] = [];
+  selectedSalesData: Transaction[] = [];
 
   tableData: TableData[] = [
     // { date: '4/4/23', number_of_checkouts: 12, total: 48.21 },
@@ -39,29 +61,32 @@ export class AdminComponent implements OnInit {
   rprelabel: string[] = [];
   rpretotal: number[] = [];
   rpretaxes: number[] = [];
-  rprenet: number[]= [];
+  rprenet: number[] = [];
 
   public barChartTotalData: ChartConfiguration<'bar'>['data'] = {
     labels: this.rprelabel,
     datasets: [
-      { data: this.rpretotal, backgroundColor: 'limegreen' , label: 'Total Sales'},
-    ]
+      {
+        data: this.rpretotal,
+        backgroundColor: 'limegreen',
+        label: 'Total Sales',
+      },
+    ],
   };
 
   public barChartTaxesData: ChartConfiguration<'bar'>['data'] = {
     labels: this.rprelabel,
     datasets: [
-      { data: this.rpretaxes, backgroundColor: 'limegreen', label: 'Taxes' }
-    ]
+      { data: this.rpretaxes, backgroundColor: 'limegreen', label: 'Taxes' },
+    ],
   };
 
   public barChartNetData: ChartConfiguration<'bar'>['data'] = {
     labels: this.rprelabel,
     datasets: [
       { data: this.rprenet, backgroundColor: 'limegreen', label: 'Net Sales' },
-    ]
+    ],
   };
-
 
   public barChartOptions: ChartConfiguration<'bar'>['options'] = {
     responsive: true,
@@ -72,40 +97,47 @@ export class AdminComponent implements OnInit {
   }
 
   fetchTableData() {
-    this.http.get(environment.api_host + '/transactions').subscribe((data: any) => {
-      const prepData = [];
-      const result = data.result;
+    this.http
+      .get(environment.api_host + '/transactions')
+      .subscribe((data: any) => {
+        const prepData = [];
+        const result = data.result;
+        this.salesData = result;
 
-      // Loop through each date (date is the key) and add the number of checkouts and total sales
-      // to the prepData array
-      for (const date in result) {
-        prepData.push({
-          date,
-          number_of_checkouts: result[date].transactions.length,
-          total: result[date].totalPrice
+        // Loop through each date (date is the key) and add the number of checkouts and total sales
+        // to the prepData array
+        for (const date in result) {
+          prepData.push({
+            date,
+            number_of_checkouts: result[date].transactions.length,
+            total: result[date].totalPrice,
+          });
+        }
+
+        // Sort the prepData array by date
+        prepData.sort((a, b) => {
+          const aDate = new Date(a.date);
+          const bDate = new Date(b.date);
+
+          return aDate.getTime() - bDate.getTime();
         });
-      }
 
-      // Sort the prepData array by date
-      prepData.sort((a, b) => {
-        const aDate = new Date(a.date);
-        const bDate = new Date(b.date);
-
-        return aDate.getTime() - bDate.getTime();
+        // Set the tableData to the prepData array
+        this.tableData = prepData;
+        this.reloadTableData();
       });
-
-      // Set the tableData to the prepData array
-      this.tableData = prepData;
-      this.reloadTableData();
-    });
   }
 
   reloadTableData() {
     const past_10 = this.tableData.slice(0, 10);
-    const prelabel = past_10.map(data => data.date);
-    const pretotal = past_10.map(data =>  parseFloat((data.total * 1.06).toFixed(2)));
-    const prenet = past_10.map(data => data.total);
-    const pretaxes = past_10.map(data => parseFloat(((data.total * 1.06) - data.total).toFixed(2)));
+    const prelabel = past_10.map((data) => data.date);
+    const pretotal = past_10.map((data) =>
+      parseFloat((data.total * 1.06).toFixed(2))
+    );
+    const prenet = past_10.map((data) => data.total);
+    const pretaxes = past_10.map((data) =>
+      parseFloat((data.total * 1.06 - data.total).toFixed(2))
+    );
     this.rprelabel = prelabel;
     this.rpretotal = pretotal;
     this.rpretaxes = pretaxes;
@@ -113,25 +145,36 @@ export class AdminComponent implements OnInit {
     this.barChartTotalData = {
       labels: this.rprelabel,
       datasets: [
-        { data: this.rpretotal, backgroundColor: 'limegreen', label: 'Total Sales' },
-      ]
+        {
+          data: this.rpretotal,
+          backgroundColor: 'limegreen',
+          label: 'Total Sales',
+        },
+      ],
     };
     this.barChartTaxesData = {
       labels: this.rprelabel,
       datasets: [
-        { data: this.rpretaxes, backgroundColor: 'limegreen', label: 'Taxes' }
-      ]
+        { data: this.rpretaxes, backgroundColor: 'limegreen', label: 'Taxes' },
+      ],
     };
     this.barChartNetData = {
       labels: this.rprelabel,
       datasets: [
-        { data: this.rprenet, backgroundColor: 'limegreen', label: 'Net Sales' },
-      ]
+        {
+          data: this.rprenet,
+          backgroundColor: 'limegreen',
+          label: 'Net Sales',
+        },
+      ],
     };
   }
 
   getTotalCheckouts() {
-    return this.tableData.reduce((acc, curr) => parseFloat(acc + curr.number_of_checkouts), 0);
+    return this.tableData.reduce(
+      (acc, curr) => parseFloat(acc + curr.number_of_checkouts),
+      0
+    );
   }
 
   getTotalSales() {
@@ -139,7 +182,7 @@ export class AdminComponent implements OnInit {
   }
 
   getTaxes() {
-    return this.getTotalSales() * 0.06; 
+    return this.getTotalSales() * 0.06;
   }
 
   getNetGain() {
@@ -149,7 +192,9 @@ export class AdminComponent implements OnInit {
   // Show modal and set selected data
   showModal(date: string): void {
     this.isVisible = true;
-    this.selectedData = this.tableData.find(data => data.date === date);
+    this.selectedData = this.tableData.find((data) => data.date === date);
+    // @ts-ignore
+    this.selectedSalesData = this.salesData[date].transactions;
     this.changeDetectorRef.detectChanges(); // Manually trigger change detection
   }
 
